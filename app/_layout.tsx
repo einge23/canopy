@@ -1,55 +1,57 @@
 import "~/global.css";
-
 import {
-    DarkTheme,
-    DefaultTheme,
-    Theme,
-    ThemeProvider,
-} from "@react-navigation/native";
+    Comfortaa_300Light,
+    Comfortaa_400Regular,
+    Comfortaa_500Medium,
+    Comfortaa_600SemiBold,
+    Comfortaa_700Bold,
+} from "@expo-google-fonts/comfortaa";
+import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as React from "react";
-import { Platform } from "react-native";
-import { NAV_THEME } from "~/lib/constants";
+import { Platform, View } from "react-native";
 import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
 
-const LIGHT_THEME: Theme = {
-    ...DefaultTheme,
-    colors: NAV_THEME.light,
-};
-const DARK_THEME: Theme = {
-    ...DarkTheme,
-    colors: NAV_THEME.dark,
+export const unstable_settings = {
+    initialRouteName: "sign-in",
 };
 
-export {
-    // Catch any errors thrown by the Layout component.
-    ErrorBoundary,
-} from "expo-router";
+export { ErrorBoundary } from "expo-router";
 
 export default function RootLayout() {
     const hasMounted = React.useRef(false);
-    const { colorScheme, isDarkColorScheme } = useColorScheme();
+    const { colorScheme } = useColorScheme();
     const [isColorSchemeLoaded, setIsColorSchemeLoaded] = React.useState(false);
+    const [fontsLoaded] = useFonts({
+        Comfortaa_300Light,
+        Comfortaa_400Regular,
+        Comfortaa_500Medium,
+        Comfortaa_600SemiBold,
+        Comfortaa_700Bold,
+    });
 
     useIsomorphicLayoutEffect(() => {
-        if (hasMounted.current) {
-            return;
-        }
+        if (hasMounted.current) return;
 
         if (Platform.OS === "web") {
-            // Adds the background color to the html element to prevent white background on overscroll.
-            document.documentElement.classList.add("bg-background");
+            // Toggle dark mode on web via the "dark" class on the <html> element.
+            if (colorScheme === "dark") {
+                document.documentElement.classList.add("dark");
+            } else {
+                document.documentElement.classList.remove("dark");
+            }
         }
+
         setAndroidNavigationBar(colorScheme);
         setIsColorSchemeLoaded(true);
         hasMounted.current = true;
-    }, []);
+    }, [colorScheme]);
 
-    if (!isColorSchemeLoaded) {
+    if (!fontsLoaded || !isColorSchemeLoaded) {
         return null;
     }
 
@@ -59,20 +61,41 @@ export default function RootLayout() {
         day: "numeric",
     });
 
+    // For native devices, fallback to explicit background colors.
+    const nativeBackgroundColor =
+        colorScheme === "dark"
+            ? "#212121" /* dark: formerly background (#2a3e34) */
+            : "#e8f4ea"; /* light: formerly background */
+
     return (
-        <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-            <StatusBar style={isDarkColorScheme ? "light" : "dark"} />
+        <View
+            className="flex-1 bg-background"
+            style={{ backgroundColor: nativeBackgroundColor }}
+        >
+            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
             <Stack>
                 <Stack.Screen
-                    name="index"
+                    name="sign-in"
                     options={{
-                        title: `${today}`,
+                        title: "",
+                        headerStyle: {
+                            backgroundColor:
+                                colorScheme === "dark" ? "#2e2e2e" : "#b8d8be",
+                        },
+                        headerShadowVisible: false,
+                        headerRight: () => <ThemeToggle />,
+                    }}
+                />
+                <Stack.Screen
+                    name="home"
+                    options={{
+                        title: today,
                         headerRight: () => <ThemeToggle />,
                     }}
                 />
             </Stack>
             <PortalHost />
-        </ThemeProvider>
+        </View>
     );
 }
 
