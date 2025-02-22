@@ -15,10 +15,8 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
-
-export const unstable_settings = {
-    initialRouteName: "sign-in",
-};
+import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
+import { tokenCache } from "~/cache";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -67,35 +65,37 @@ export default function RootLayout() {
             ? "#212121" /* dark: formerly background (#2a3e34) */
             : "#e8f4ea"; /* light: formerly background */
 
+    const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+
+    if (!publishableKey) {
+        throw new Error(
+            "Missing Publishable Key. Please set EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY in your .env"
+        );
+    }
+
     return (
-        <View
-            className="flex-1 bg-background"
-            style={{ backgroundColor: nativeBackgroundColor }}
-        >
-            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-            <Stack>
-                <Stack.Screen
-                    name="sign-in"
-                    options={{
-                        title: "",
-                        headerStyle: {
-                            backgroundColor:
-                                colorScheme === "dark" ? "#2e2e2e" : "#b8d8be",
-                        },
-                        headerShadowVisible: false,
-                        headerRight: () => <ThemeToggle />,
-                    }}
-                />
-                <Stack.Screen
-                    name="home"
-                    options={{
-                        title: today,
-                        headerRight: () => <ThemeToggle />,
-                    }}
-                />
-            </Stack>
-            <PortalHost />
-        </View>
+        <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
+            <ClerkLoaded>
+                <View
+                    className="flex-1 bg-background"
+                    style={{ backgroundColor: nativeBackgroundColor }}
+                >
+                    <StatusBar
+                        style={colorScheme === "dark" ? "light" : "dark"}
+                    />
+                    <Stack>
+                        <Stack.Screen
+                            name="home"
+                            options={{
+                                title: today,
+                                headerRight: () => <ThemeToggle />,
+                            }}
+                        />
+                    </Stack>
+                    <PortalHost />
+                </View>
+            </ClerkLoaded>
+        </ClerkProvider>
     );
 }
 
