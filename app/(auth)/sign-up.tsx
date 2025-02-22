@@ -7,7 +7,7 @@ import {
     Keyboard,
 } from "react-native";
 import { useSignUp } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { Href, Link, useRouter } from "expo-router";
 import {
     Card,
     CardContent,
@@ -16,66 +16,78 @@ import {
     CardTitle,
 } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
+import { useCallback, useState } from "react";
 
 export default function SignUpScreen() {
     const { isLoaded, signUp, setActive } = useSignUp();
     const router = useRouter();
 
-    const [emailAddress, setEmailAddress] = React.useState("");
-    const [password, setPassword] = React.useState("");
-    const [pendingVerification, setPendingVerification] = React.useState(false);
-    const [code, setCode] = React.useState("");
+    const [emailAddress, setEmailAddress] = useState("");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [pendingVerification, setPendingVerification] = useState(false);
+    const [code, setCode] = useState("");
+    const [loading, setLoading] = useState(false);
 
-    // Handle submission of sign-up form
+    const [lastNavTime, setLastNavTime] = useState(0);
+    const NAVIGATION_COOLDOWN = 1000;
+
+    const handleNavigation = useCallback(
+        (path: Href) => {
+            const now = Date.now();
+            if (now - lastNavTime < NAVIGATION_COOLDOWN) {
+                return;
+            }
+            setLastNavTime(now);
+            router.replace(path);
+        },
+        [lastNavTime]
+    );
+
     const onSignUpPress = async () => {
-        if (!isLoaded) return;
+        if (!isLoaded || loading) return;
 
-        // Start sign-up process using email and password provided
         try {
+            setLoading(true);
             await signUp.create({
                 emailAddress,
+                username,
                 password,
             });
 
-            // Send user an email with verification code
             await signUp.prepareEmailAddressVerification({
                 strategy: "email_code",
             });
 
-            // Set 'pendingVerification' to true to display second form
-            // and capture OTP code
             setPendingVerification(true);
         } catch (err) {
             // See https://clerk.com/docs/custom-flows/error-handling
             // for more info on error handling
             console.error(JSON.stringify(err, null, 2));
+        } finally {
+            setLoading(false);
         }
     };
 
-    // Handle submission of verification form
     const onVerifyPress = async () => {
-        if (!isLoaded) return;
+        if (!isLoaded || loading) return;
 
         try {
-            // Use the code the user provided to attempt verification
+            setLoading(true);
             const signUpAttempt = await signUp.attemptEmailAddressVerification({
                 code,
             });
 
-            // If verification was completed, set the session to active
-            // and redirect the user
             if (signUpAttempt.status === "complete") {
                 await setActive({ session: signUpAttempt.createdSessionId });
-                router.replace("/");
+                handleNavigation("/");
             } else {
-                // If the status is not complete, check why. User may need to
-                // complete further steps.
                 console.error(JSON.stringify(signUpAttempt, null, 2));
             }
         } catch (err) {
-            // See https://clerk.com/docs/custom-flows/error-handling
-            // for more info on error handling
             console.error(JSON.stringify(err, null, 2));
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -128,7 +140,7 @@ export default function SignUpScreen() {
             </Text>
 
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <Card className="w-[90%] max-w-sm bg-background p-6">
+                <Card className="w-[90%] max-w-sm bg-background p-2">
                     <CardHeader className="items-center space-y-4 pb-6">
                         <CardTitle className="text-center text-2xl pb-6">
                             sign up to canopy
@@ -147,6 +159,15 @@ export default function SignUpScreen() {
                                 placeholder="Enter email"
                                 onChangeText={(emailAddress) =>
                                     setEmailAddress(emailAddress)
+                                }
+                            />
+                            <TextInput
+                                className="w-full rounded-xl border border-border bg-background p-4 mt-4 font-light text-foreground"
+                                autoCapitalize="none"
+                                value={username}
+                                placeholder="Enter username"
+                                onChangeText={(username) =>
+                                    setUsername(username)
                                 }
                             />
                             <TextInput

@@ -1,12 +1,12 @@
 import { useSignIn } from "@clerk/clerk-expo";
-import { Link, useRouter } from "expo-router";
+import { Href, Link, useRouter } from "expo-router";
 import {
     View,
     TextInput,
     Keyboard,
     TouchableWithoutFeedback,
 } from "react-native";
-import React from "react";
+import React, { useCallback, useState } from "react";
 import {
     Card,
     CardHeader,
@@ -16,20 +16,35 @@ import {
 } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
 import { Button } from "~/components/ui/button";
+import { set } from "better-auth/*";
 
 export default function Page() {
     const { signIn, setActive, isLoaded } = useSignIn();
     const router = useRouter();
 
-    const [emailAddress, setEmailAddress] = React.useState("");
-    const [password, setPassword] = React.useState("");
+    const [emailAddress, setEmailAddress] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [lastNavTime, setLastNavTime] = useState(0);
+    const NAVIGATION_COOLDOWN = 1000;
 
-    // Handle the submission of the sign-in form
-    const onSignInPress = React.useCallback(async () => {
-        if (!isLoaded) return;
+    const handleNavigation = useCallback(
+        (path: Href) => {
+            const now = Date.now();
+            if (now - lastNavTime < NAVIGATION_COOLDOWN) {
+                return;
+            }
+            setLastNavTime(now);
+            router.replace(path);
+        },
+        [lastNavTime]
+    );
 
-        // Start the sign-in process using the email and password provided
+    const onSignInPress = useCallback(async () => {
+        if (!isLoaded || loading) return;
+
         try {
+            setLoading(true);
             const signInAttempt = await signIn.create({
                 identifier: emailAddress,
                 password,
@@ -39,7 +54,7 @@ export default function Page() {
             // and redirect the user
             if (signInAttempt.status === "complete") {
                 await setActive({ session: signInAttempt.createdSessionId });
-                router.replace("/");
+                handleNavigation("/");
             } else {
                 // If the status isn't complete, check why. User might need to
                 // complete further steps.
@@ -49,6 +64,8 @@ export default function Page() {
             // See https://clerk.com/docs/custom-flows/error-handling
             // for more info on error handling
             console.error(JSON.stringify(err, null, 2));
+        } finally {
+            setLoading(false);
         }
     }, [isLoaded, emailAddress, password]);
 

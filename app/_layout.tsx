@@ -83,14 +83,12 @@ export default function RootLayout() {
                     <StatusBar
                         style={colorScheme === "dark" ? "light" : "dark"}
                     />
-                    <Stack>
-                        <Stack.Screen
-                            name="home"
-                            options={{
-                                title: today,
-                                headerRight: () => <ThemeToggle />,
-                            }}
-                        />
+                    <Stack
+                        screenOptions={{
+                            headerShown: false,
+                        }}
+                    >
+                        <Stack.Screen name="home" />
                     </Stack>
                     <PortalHost />
                 </View>
