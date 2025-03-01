@@ -13,6 +13,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import * as Haptics from "expo-haptics";
 
 export default function UserButton() {
     const { user } = useUser();
@@ -33,7 +34,7 @@ export default function UserButton() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Pressable>
+                <Pressable onPress={() => Haptics.selectionAsync()}>
                     <Avatar alt="User avatar" className="w-8 h-8">
                         <AvatarImage
                             source={{ uri: user?.imageUrl }}
@@ -74,7 +75,7 @@ export default function UserButton() {
                     <DropdownMenuItem>
                         <User className="mr-2 h-4 w-4" color={iconColor} />
                         <Text className="text-foreground font-semibold">
-                            Profile
+                            profile
                         </Text>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -84,7 +85,7 @@ export default function UserButton() {
                             color={iconColor}
                         />
                         <Text className="text-foreground font-semibold">
-                            Sign out
+                            sign out
                         </Text>
                     </DropdownMenuItem>
                 </Animated.View>

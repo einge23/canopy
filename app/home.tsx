@@ -5,41 +5,53 @@ import { useEffect, useRef, useState } from "react";
 import {
     Dimensions,
     FlatList,
-    ScrollView,
+    Pressable,
     useColorScheme,
     View,
 } from "react-native";
-import { FlatGrid, FlatGridProps } from "react-native-super-grid";
+import { FlatGrid } from "react-native-super-grid";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Navbar } from "~/components/navbar";
 import { Text } from "~/components/ui/text";
 import { Button } from "~/components/ui/button";
 import { Plus } from "lucide-react-native";
+import AddEventModal from "~/components/pages/home/add-event-modal";
+import { set } from "better-auth/*";
 
-const { height } = Dimensions.get("window");
-const boxHeight = 80;
+const boxHeight = 64;
 
 export default function Home() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const flatGridRef = useRef<FlatList>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
-        // Update current time every minute
         const timer = setInterval(() => {
             setCurrentTime(new Date());
         }, 60000);
 
-        // Scroll to current hour
-        if (flatGridRef.current) {
-            flatGridRef.current.scrollToIndex({
-                index: currentTime.getHours(),
-                animated: true,
-            });
-        }
-
         return () => clearInterval(timer);
     }, []);
+
+    useEffect(() => {
+        const scrollTimer = setTimeout(() => {
+            if (flatGridRef.current) {
+                try {
+                    flatGridRef.current.scrollToIndex({
+                        index: currentTime.getHours(),
+                        animated: true,
+                        viewPosition: 0.3,
+                    });
+                    console.log(`Scrolling to hour: ${currentTime.getHours()}`);
+                } catch (error) {
+                    console.error("Error scrolling:", error);
+                }
+            }
+        }, 300);
+
+        return () => clearTimeout(scrollTimer);
+    }, [currentTime]);
 
     const { user } = useUser();
     const colorScheme = useColorScheme();
@@ -53,7 +65,7 @@ export default function Home() {
 
     const getCurrentTimeOffset = () => {
         const minutes = currentTime.getMinutes();
-        return (minutes / 60) * boxHeight - 1;
+        return (minutes / 60) * boxHeight;
     };
 
     return (
@@ -72,12 +84,13 @@ export default function Home() {
                             index,
                         })}
                         renderItem={({ item }) => (
-                            <View
+                            <Pressable
                                 className={`flex-row w-full border-b ${
                                     colorScheme === "dark"
                                         ? "border-white/10"
                                         : "border-gray-400"
                                 }`}
+                                onPress={() => setIsModalOpen(true)}
                             >
                                 <View
                                     className={`w-20 p-4 border-r ${
@@ -104,8 +117,8 @@ export default function Home() {
                                                     backgroundColor: "#7473fb",
                                                     zIndex: 1000,
                                                     transform: [
-                                                        { translateY: -22.3 },
-                                                        { translateX: -5 },
+                                                        { translateX: -4 },
+                                                        { translateY: -4 }, // Center the dot horizontally
                                                     ],
                                                 }}
                                             />
@@ -119,22 +132,29 @@ export default function Home() {
                                                     zIndex: 1000,
                                                     backgroundColor: "#7473fb",
                                                     transform: [
-                                                        { translateY: -19.9 },
+                                                        { translateY: -1 }, // Center line vertically
                                                     ],
                                                 }}
                                             />
                                         </>
                                     )}
                                 </View>
-                            </View>
+                            </Pressable>
                         )}
                         fixed={true}
                         numColumns={1}
                     />
                     <View className="absolute bottom-4 right-4">
-                        <Button className="w-14 h-16 rounded-full bg-accent">
+                        <Button
+                            className="w-14 h-16 rounded-full bg-accent"
+                            onPress={() => setIsModalOpen(true)}
+                        >
                             <Plus className="w-6 h-6" color={iconColor} />
                         </Button>
+                        <AddEventModal
+                            open={isModalOpen}
+                            onOpenChange={setIsModalOpen}
+                        />
                     </View>
                 </View>
             </SignedIn>

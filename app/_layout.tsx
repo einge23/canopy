@@ -15,8 +15,8 @@ import { useColorScheme } from "~/lib/useColorScheme";
 import { PortalHost } from "@rn-primitives/portal";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
-import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import { tokenCache } from "~/cache";
+import { ClerkLoaded, ClerkProvider } from "@clerk/clerk-expo";
 
 export { ErrorBoundary } from "expo-router";
 
