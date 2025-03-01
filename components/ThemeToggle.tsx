@@ -12,7 +12,8 @@ export function ThemeToggle() {
         const newTheme = isDarkColorScheme ? "light" : "dark";
         setColorScheme(newTheme);
         setAndroidNavigationBar(newTheme);
-        Haptics.selectionAsync();
+        Haptics.ImpactFeedbackStyle.Light;
+        Haptics.impactAsync();
     }
 
     return (
