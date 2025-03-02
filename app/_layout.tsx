@@ -17,9 +17,11 @@ import { ThemeToggle } from "~/components/ThemeToggle";
 import { setAndroidNavigationBar } from "~/lib/android-navigation-bar";
 import { tokenCache } from "~/cache";
 import { ClerkLoaded, ClerkProvider } from "@clerk/clerk-expo";
+import { SheetProvider } from "react-native-actions-sheet";
+import "~/components/ui/sheets";
 
 export { ErrorBoundary } from "expo-router";
-
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function RootLayout() {
     const hasMounted = React.useRef(false);
     const { colorScheme } = useColorScheme();
@@ -74,26 +76,35 @@ export default function RootLayout() {
     }
 
     return (
-        <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
-            <ClerkLoaded>
-                <View
-                    className="flex-1 bg-background"
-                    style={{ backgroundColor: nativeBackgroundColor }}
+        <GestureHandlerRootView style={{ flex: 1 }}>
+            <SheetProvider context="global">
+                <ClerkProvider
+                    tokenCache={tokenCache}
+                    publishableKey={publishableKey}
                 >
-                    <StatusBar
-                        style={colorScheme === "dark" ? "light" : "dark"}
-                    />
-                    <Stack
-                        screenOptions={{
-                            headerShown: false,
-                        }}
-                    >
-                        <Stack.Screen name="home" />
-                    </Stack>
-                    <PortalHost />
-                </View>
-            </ClerkLoaded>
-        </ClerkProvider>
+                    <ClerkLoaded>
+                        <View
+                            className="flex-1 bg-background"
+                            style={{ backgroundColor: nativeBackgroundColor }}
+                        >
+                            <StatusBar
+                                style={
+                                    colorScheme === "dark" ? "light" : "dark"
+                                }
+                            />
+                            <Stack
+                                screenOptions={{
+                                    headerShown: false,
+                                }}
+                            >
+                                <Stack.Screen name="home" />
+                            </Stack>
+                            <PortalHost />
+                        </View>
+                    </ClerkLoaded>
+                </ClerkProvider>
+            </SheetProvider>
+        </GestureHandlerRootView>
     );
 }
 

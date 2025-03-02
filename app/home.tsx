@@ -17,6 +17,7 @@ import { Button } from "~/components/ui/button";
 import { Plus } from "lucide-react-native";
 import AddEventModal from "~/components/pages/home/add-event-modal";
 import { set } from "better-auth/*";
+import { SheetManager } from "react-native-actions-sheet";
 
 const boxHeight = 64;
 
@@ -25,6 +26,7 @@ export default function Home() {
     const flatGridRef = useRef<FlatList>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedHour, setSelectedHour] = useState<number | null>(null);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -68,6 +70,10 @@ export default function Home() {
         return (minutes / 60) * boxHeight;
     };
 
+    const handleOpenAddEventSheet = () => {
+        SheetManager.show("add-event-sheet");
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-background">
             <SignedIn>
@@ -85,16 +91,25 @@ export default function Home() {
                         })}
                         renderItem={({ item }) => (
                             <Pressable
-                                className={`flex-row w-full border-b ${
-                                    colorScheme === "dark"
-                                        ? "border-white/10"
-                                        : "border-gray-400"
+                                className={`flex-row w-full ${
+                                    selectedHour === item
+                                        ? "border-2 border-red-500 border-rounded"
+                                        : `border ${
+                                              colorScheme === "dark"
+                                                  ? "border-white/10"
+                                                  : "border-gray-400"
+                                          }`
                                 }`}
-                                onPress={() => setIsModalOpen(true)}
+                                onPress={() => {
+                                    setSelectedHour(item);
+                                    handleOpenAddEventSheet();
+                                }}
                             >
                                 <View
                                     className={`w-20 p-4 border-r ${
-                                        colorScheme === "dark"
+                                        selectedHour === item
+                                            ? "border-red-500"
+                                            : colorScheme === "dark"
                                             ? "border-white/10"
                                             : "border-gray-400"
                                     }`}
