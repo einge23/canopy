@@ -34,7 +34,7 @@ export default function UserButton() {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Pressable onPress={() => Haptics.impactAsync()}>
+                <Pressable onPress={() => Haptics.impactAsync}>
                     <Avatar alt="User avatar" className="w-8 h-8">
                         <AvatarImage
                             source={{ uri: user?.imageUrl }}
@@ -92,8 +92,4 @@ export default function UserButton() {
             </DropdownMenuContent>
         </DropdownMenu>
     );
-}
-
-function signOut() {
-    throw new Error("Function not implemented.");
 }

@@ -5,7 +5,7 @@ import {
     CardFooter,
     CardHeader,
     CardTitle,
-} from "~/components/ui/card";
+} from "~/components/pages/home/card";
 import { Text } from "~/components/ui/text";
 import { Button } from "~/components/ui/button";
 

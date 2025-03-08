@@ -5,8 +5,12 @@ registerSheet("add-event-sheet", AddEventSheet);
 
 declare module "react-native-actions-sheet" {
     interface Sheets {
-        "add-event-sheet": SheetDefinition;
+        "add-event-sheet": SheetDefinition<{
+            payload: {
+                selectedDate: Date;
+                startHour: number;
+                user_id: number;
+            };
+        }>;
     }
 }
-
-export {};

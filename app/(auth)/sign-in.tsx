@@ -16,7 +16,6 @@ import {
 } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
 import { Button } from "~/components/ui/button";
-import { set } from "better-auth/*";
 
 export default function Page() {
     const { signIn, setActive, isLoaded } = useSignIn();

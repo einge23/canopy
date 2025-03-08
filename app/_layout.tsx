@@ -19,6 +19,7 @@ import { tokenCache } from "~/cache";
 import { ClerkLoaded, ClerkProvider } from "@clerk/clerk-expo";
 import { SheetProvider } from "react-native-actions-sheet";
 import "~/components/ui/sheets";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 export { ErrorBoundary } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -63,9 +64,7 @@ export default function RootLayout() {
 
     // For native devices, fallback to explicit background colors.
     const nativeBackgroundColor =
-        colorScheme === "dark"
-            ? "#212121" /* dark: formerly background (#2a3e34) */
-            : "#e8f4ea"; /* light: formerly background */
+        colorScheme === "dark" ? "#212121" : "#e8f4ea";
 
     const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -75,35 +74,43 @@ export default function RootLayout() {
         );
     }
 
+    const queryClient = new QueryClient();
+
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
-            <SheetProvider context="global">
-                <ClerkProvider
-                    tokenCache={tokenCache}
-                    publishableKey={publishableKey}
-                >
-                    <ClerkLoaded>
-                        <View
-                            className="flex-1 bg-background"
-                            style={{ backgroundColor: nativeBackgroundColor }}
-                        >
-                            <StatusBar
-                                style={
-                                    colorScheme === "dark" ? "light" : "dark"
-                                }
-                            />
-                            <Stack
-                                screenOptions={{
-                                    headerShown: false,
+            <ClerkProvider
+                tokenCache={tokenCache}
+                publishableKey={publishableKey}
+            >
+                <QueryClientProvider client={queryClient}>
+                    <SheetProvider context="global">
+                        <ClerkLoaded>
+                            <View
+                                className="flex-1 bg-background"
+                                style={{
+                                    backgroundColor: nativeBackgroundColor,
                                 }}
                             >
-                                <Stack.Screen name="home" />
-                            </Stack>
-                            <PortalHost />
-                        </View>
-                    </ClerkLoaded>
-                </ClerkProvider>
-            </SheetProvider>
+                                <StatusBar
+                                    style={
+                                        colorScheme === "dark"
+                                            ? "light"
+                                            : "dark"
+                                    }
+                                />
+                                <Stack
+                                    screenOptions={{
+                                        headerShown: false,
+                                    }}
+                                >
+                                    <Stack.Screen name="home" />
+                                </Stack>
+                                <PortalHost />
+                            </View>
+                        </ClerkLoaded>
+                    </SheetProvider>
+                </QueryClientProvider>
+            </ClerkProvider>
         </GestureHandlerRootView>
     );
 }
