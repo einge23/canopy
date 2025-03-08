@@ -20,7 +20,7 @@ import { ClerkLoaded, ClerkProvider } from "@clerk/clerk-expo";
 import { SheetProvider } from "react-native-actions-sheet";
 import "~/components/ui/sheets";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-
+import { Toaster } from 'sonner-native';
 export { ErrorBoundary } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 export default function RootLayout() {
@@ -105,6 +105,7 @@ export default function RootLayout() {
                                 >
                                     <Stack.Screen name="home" />
                                 </Stack>
+                                <Toaster />
                                 <PortalHost />
                             </View>
                         </ClerkLoaded>

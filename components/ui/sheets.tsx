@@ -9,7 +9,7 @@ declare module "react-native-actions-sheet" {
             payload: {
                 selectedDate: Date;
                 startHour: number;
-                user_id: number;
+                user_id: string;
             };
         }>;
     }

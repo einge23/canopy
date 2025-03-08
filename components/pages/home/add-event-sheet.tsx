@@ -18,6 +18,7 @@ import { useMemo, useState } from "react";
 import { CreateEventRequest, createEvent } from "~/api/events";
 import { useUser } from "@clerk/clerk-expo";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner-native";
 
 interface AddEventSheetProps extends SheetProps<"add-event-sheet"> {
     onClose?: () => void;
@@ -26,14 +27,20 @@ interface AddEventSheetProps extends SheetProps<"add-event-sheet"> {
 export default function AddEventSheet(props: AddEventSheetProps) {
     const colorScheme = useColorScheme();
     const bgColor = colorScheme === "dark" ? "#212121" : "#e8f4ea";
-    const userId = props.payload?.user_id || 0;
 
+    const { user } = useUser();
+    if(!user) {
+        return null;
+    }
+    const userId = user.id;
     const { isPending, mutate: saveEvent } = useMutation({
         mutationFn: async () => await createEvent(createEventRequest),
         onSuccess: () => {
-            console.log("Event saved successfully");
+            toast.success("Event saved successfully");
+            SheetManager.hide("add-event-sheet");
         },
         onError: (error) => {
+            toast.error("Failed to save event");
             console.error("Failed to save event:", error);
         },
     });
@@ -71,6 +78,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
             description: "",
             user_id: userId,
             color: defaultColor,
+            recurrence_rule: undefined,
         });
 
     // UI state for recurrence selection
@@ -124,6 +132,13 @@ export default function AddEventSheet(props: AddEventSheetProps) {
         }));
     };
 
+    const handleLocationChange = (location: string) => {
+        setCreateEventRequest((prev) => ({
+            ...prev,
+            location,
+        }));
+    };
+
     // Handlers for other form fields
     const handleNameChange = (name: string) => {
         setCreateEventRequest((prev) => ({
@@ -172,7 +187,8 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                 marginTop: 8,
                 alignSelf: "center",
             }}
-            keyboardHandlerEnabled={false}
+            keyboardHandlerEnabled={true}
+            
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View
@@ -185,21 +201,18 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                 >
                     {formattedDateTime && (
                         <View className="mb-4">
-                            <Text className="font-semibold text-xl">
+                            <Text className="text-xl font-semibold">
                                 {formattedDateTime}
                             </Text>
                         </View>
                     )}
-                    <Text className="text-base font-medium mb-4">
-                        new event
-                    </Text>
 
                     <View className="mb-4">
                         <TextInput
-                            placeholder="add title"
+                            placeholder="event name"
                             value={createEventRequest.name}
                             onChangeText={handleNameChange}
-                            className="border border-input p-3 rounded font-light text-white"
+                            className="p-3 font-light text-white rounded border border-input"
                         />
                     </View>
 
@@ -207,7 +220,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                         <Text className="mb-2 text-base font-semibold">
                             recurrence
                         </Text>
-                        <View className="flex-row items-center justify-between border border-input p-3 rounded">
+                        <View className="flex-row justify-between items-center p-3 rounded border border-input">
                             {recurrenceOptions.map((option) => (
                                 <Pressable
                                     key={option}
@@ -233,7 +246,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                         <Text className="mb-2 text-base font-semibold">
                             event color
                         </Text>
-                        <View className="flex-row items-center justify-between">
+                        <View className="flex-row justify-between items-center">
                             {colorOptions.map((color) => (
                                 <TouchableOpacity
                                     key={color}
@@ -263,12 +276,25 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                             value={createEventRequest.description}
                             onChangeText={handleDescriptionChange}
                             multiline
-                            numberOfLines={4}
-                            className="border border-input p-3 rounded min-h-[100px] font-light text-white"
+                            numberOfLines={3}
+                            className="border border-input p-3 rounded min-h-[65px] font-light text-white"
+                        />
+                    </View>
+                    
+                    <Text className="mb-4 text-base font-medium">
+                        location
+                    </Text>
+
+                    <View className="mb-4">
+                        <TextInput
+                            placeholder="location"
+                            value={createEventRequest.location}
+                            onChangeText={handleLocationChange}
+                            className="p-3 font-light text-white rounded border border-input"
                         />
                     </View>
 
-                    <View className="flex-row justify-end gap-2 mt-4">
+                    <View className="flex-row gap-2 justify-end mt-4">
                         <Button
                             onPress={handleCloseSheet}
                             className="bg-neutral-400 px-5 py-2.5"

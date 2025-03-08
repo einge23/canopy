@@ -6,9 +6,14 @@ export interface CreateEventRequest {
     end: Date;
     location: string;
     description: string;
-    user_id: number;
+    user_id: string;
     color: string;
     recurrence_rule?: string;
+}
+
+export interface getUserEventsByDateRequest {
+    user_id: string;
+    date: Date;
 }
 
 export interface EventDTO {
@@ -27,5 +32,11 @@ export interface EventDTO {
 
 export async function createEvent(request: CreateEventRequest) {
     const response = await api.post<EventDTO>("/events/create", request);
+    return response.data;
+}
+
+
+export async function getUserEventsByDate(request: getUserEventsByDateRequest) {
+    const response = await api.get<EventDTO[]>(`/events/${request.user_id}/${request.date.toISOString()}`);
     return response.data;
 }

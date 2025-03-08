@@ -17,6 +17,8 @@ import { Button } from "~/components/ui/button";
 import { Plus } from "lucide-react-native";
 import AddEventModal from "~/components/pages/home/add-event-modal";
 import { SheetManager } from "react-native-actions-sheet";
+import { useQuery } from "@tanstack/react-query";
+import { getUserEventsByDate } from "~/api/events";
 
 const boxHeight = 64;
 
@@ -27,8 +29,11 @@ export default function Home() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
     const { user } = useUser();
-    const user_id = parseInt(user?.id as string);
-
+    if(!user) {
+        return null;
+    }
+    
+    const user_id = user.id
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
@@ -36,6 +41,13 @@ export default function Home() {
 
         return () => clearInterval(timer);
     }, []);
+
+    const currentDate = new Date();
+
+    const {isLoading, data: events} = useQuery({
+        queryKey: ["events", user_id, currentDate],
+        queryFn: () => getUserEventsByDate({ user_id, date: currentDate }),
+    })
 
     useEffect(() => {
         const scrollTimer = setTimeout(() => {
@@ -164,7 +176,7 @@ export default function Home() {
                         fixed={true}
                         numColumns={1}
                     />
-                    <View className="absolute bottom-4 right-4">
+                    <View className="absolute right-4 bottom-4">
                         <Button
                             className="w-14 h-16 rounded-full bg-accent"
                             onPress={() => setIsModalOpen(true)}
