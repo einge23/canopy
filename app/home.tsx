@@ -155,15 +155,22 @@ export default function Home() {
                                         : ""
                                 }`}
                                 onPress={() => {
-                                    setSelectedHour(item);
-                                    handleOpenAddEventSheet(item);
+                                    const hourEvents = getEventsForHour(item);
+                                    if (hourEvents.length === 0) {
+                                        setSelectedHour(item);
+                                        handleOpenAddEventSheet(item);
+                                    } else {
+                                        console.log(
+                                            "This hour already has events"
+                                        );
+                                    }
                                 }}
                             >
                                 <View
                                     className={`w-20 p-4 border-r border-b ${
                                         colorScheme === "dark"
                                             ? "border-white/10"
-                                            : "border-gray-300"
+                                            : "border-green-900"
                                     }`}
                                 >
                                     <Text className="text-sm font-light">
@@ -174,7 +181,7 @@ export default function Home() {
                                     className={`flex-1 h-16 relative border-b ${
                                         colorScheme === "dark"
                                             ? "border-white/10"
-                                            : "border-gray-300"
+                                            : "border-green-900"
                                     }`}
                                 >
                                     {item === currentTime.getHours() && (

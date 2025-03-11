@@ -4,9 +4,11 @@ import {
     useColorScheme,
     Pressable,
     TouchableOpacity,
-    TouchableWithoutFeedback,
     Keyboard,
     ActivityIndicator,
+    KeyboardAvoidingView,
+    Platform,
+    ScrollView,
 } from "react-native";
 import ActionSheet, {
     SheetManager,
@@ -14,7 +16,7 @@ import ActionSheet, {
 } from "react-native-actions-sheet";
 import { Text } from "~/components/ui/text";
 import { Button } from "~/components/ui/button";
-import { useMemo, useState } from "react";
+import { useMemo, useRef } from "react";
 import { CreateEventRequest, createEvent } from "~/api/events";
 import { useUser } from "@clerk/clerk-expo";
 import { useMutation } from "@tanstack/react-query";
@@ -29,23 +31,15 @@ export default function AddEventSheet(props: AddEventSheetProps) {
     const colorScheme = useColorScheme();
     const bgColor = colorScheme === "dark" ? "#212121" : "#e8f4ea";
 
+    const nameInputRef = useRef<TextInput>(null);
+    const descriptionInputRef = useRef<TextInput>(null);
+    const locationInputRef = useRef<TextInput>(null);
+
     const { user } = useUser();
     if (!user) {
         return null;
     }
     const userId = user.id;
-    const { isPending, mutate: saveEvent } = useMutation({
-        mutationFn: async () => await createEvent(addEventForm.state.values),
-        onSuccess: () => {
-            toast.success("Event saved successfully");
-            SheetManager.hide("add-event-sheet");
-            if (props.payload) props.payload.refetchEvents();
-        },
-        onError: (error) => {
-            toast.error("Failed to save event");
-            console.error("Failed to save event:", error);
-        },
-    });
 
     // Initialize with payload data if available
     const initialStart = useMemo(() => {
@@ -68,9 +62,44 @@ export default function AddEventSheet(props: AddEventSheetProps) {
         return new Date();
     }, [props.payload]);
 
-    // Use default color from colorOptions
-    const defaultColor = "#55CBCD";
-    // UI state for recurrence selection
+    const addEventForm = useForm({
+        defaultValues: {
+            name: "",
+            description: "",
+            location: "",
+            color: "#55CBCD", // Default color
+            recurrence_rule: "Never",
+            start: initialStart,
+            end: initialEnd,
+            user_id: userId,
+        } as CreateEventRequest,
+    });
+
+    const { isPending, mutate: saveEvent } = useMutation({
+        mutationFn: async () => await createEvent(addEventForm.state.values),
+        onSuccess: () => {
+            toast.success("Event saved successfully");
+            handleCloseSheet();
+            if (props.payload?.refetchEvents) {
+                props.payload.refetchEvents();
+            }
+        },
+        onError: (error) => {
+            toast.error("Failed to save event");
+            console.error("Failed to save event:", error);
+        },
+    });
+
+    const handleCloseSheet = () => {
+        if (props.onClose) {
+            props.onClose();
+        }
+        SheetManager.hide("add-event-sheet");
+    };
+
+    const handleSaveEvent = () => {
+        saveEvent();
+    };
 
     const recurrenceOptions = ["Never", "Daily", "Weekly", "Monthly", "Yearly"];
     const colorOptions = [
@@ -96,46 +125,15 @@ export default function AddEventSheet(props: AddEventSheetProps) {
         return null;
     }, [props.payload]);
 
-    const addEventForm = useForm({
-        defaultValues: {
-            name: "",
-            description: "",
-            location: "",
-            color: defaultColor,
-            recurrence: "Never",
-            start: initialStart,
-            end: initialEnd,
-            user_id: userId,
-        } as CreateEventRequest,
-        onSubmit: async () => {
-            await handleSaveEvent();
-        },
-    });
-
-    const handleCloseSheet = () => {
-        if (props.onClose) {
-            props.onClose();
-        }
-        SheetManager.hide("add-event-sheet");
-    };
-
-    const handleSaveEvent = async () => {
-        try {
-            saveEvent();
-        } catch (error) {
-            console.error("Failed to save event:", error);
-            // Add error handling here
-        }
-    };
-
     return (
         <ActionSheet
             id={props.sheetId}
-            gestureEnabled={true}
+            gestureEnabled
             containerStyle={{
                 backgroundColor: bgColor,
                 borderTopLeftRadius: 15,
                 borderTopRightRadius: 15,
+                minHeight: "85%",
             }}
             indicatorStyle={{
                 width: 60,
@@ -145,141 +143,188 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                 marginTop: 8,
                 alignSelf: "center",
             }}
-            keyboardHandlerEnabled={true}
+            onClose={handleCloseSheet}
+            closeOnPressBack={false}
+            closeOnTouchBackdrop={false}
+            useBottomSafeAreaPadding
+            snapPoints={[90]}
+            initialSnapIndex={0}
         >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View
-                    style={{
-                        backgroundColor: bgColor,
-                        padding: 24,
-                        borderTopLeftRadius: 15,
-                        borderTopRightRadius: 15,
-                    }}
-                >
-                    {formattedDateTime && (
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+            >
+                <Pressable onPress={() => Keyboard.dismiss()}>
+                    <ScrollView
+                        keyboardShouldPersistTaps="handled"
+                        contentContainerStyle={{ padding: 24 }}
+                    >
+                        {formattedDateTime && (
+                            <View className="mb-2">
+                                <Text className="text-xl font-semibold">
+                                    {formattedDateTime}
+                                </Text>
+                            </View>
+                        )}
+
                         <View className="mb-4">
-                            <Text className="text-xl font-semibold">
-                                {formattedDateTime}
-                            </Text>
-                        </View>
-                    )}
-
-                    <View className="mb-4">
-                        <TextInput
-                            placeholder="event name"
-                            value={createEventRequest.name}
-                            onChangeText={handleNameChange}
-                            className="p-3 font-light text-white rounded border border-input"
-                        />
-                    </View>
-
-                    <View className="mb-4">
-                        <Text className="mb-2 text-base font-semibold">
-                            recurrence
-                        </Text>
-                        <View className="flex-row justify-between items-center p-3 rounded border border-input">
-                            {recurrenceOptions.map((option) => (
-                                <Pressable
-                                    key={option}
-                                    onPress={() =>
-                                        handleRecurrenceChange(option)
-                                    }
-                                >
-                                    <Text
-                                        className={`${
-                                            recurrence === option
-                                                ? "text-primary font-semibold"
-                                                : "text-input font-semibold"
-                                        }`}
-                                    >
-                                        {option}
-                                    </Text>
-                                </Pressable>
-                            ))}
-                        </View>
-                    </View>
-
-                    <View className="mb-4">
-                        <Text className="mb-2 text-base font-semibold">
-                            event color
-                        </Text>
-                        <View className="flex-row justify-between items-center">
-                            {colorOptions.map((color) => (
-                                <TouchableOpacity
-                                    key={color}
-                                    onPress={() => handleColorSelect(color)}
-                                    style={{
-                                        width: 24,
-                                        height: 24,
-                                        backgroundColor: color,
-                                        borderRadius: 4,
-                                        borderColor:
-                                            createEventRequest.color === color
-                                                ? "white"
-                                                : "transparent",
-                                        borderWidth: 2,
-                                    }}
-                                />
-                            ))}
-                        </View>
-                    </View>
-
-                    <View className="mb-4">
-                        <Text className="mb-2 text-base font-semibold">
-                            event description
-                        </Text>
-                        <TextInput
-                            placeholder="Enter description"
-                            value={createEventRequest.description}
-                            onChangeText={handleDescriptionChange}
-                            multiline
-                            numberOfLines={3}
-                            className="border border-input p-3 rounded min-h-[65px] font-light text-white"
-                        />
-                    </View>
-
-                    <Text className="mb-4 text-base font-medium">location</Text>
-
-                    <View className="mb-4">
-                        <TextInput
-                            placeholder="location"
-                            value={createEventRequest.location}
-                            onChangeText={handleLocationChange}
-                            className="p-3 font-light text-white rounded border border-input"
-                        />
-                    </View>
-
-                    <View className="flex-row gap-2 justify-end mt-4">
-                        <Button
-                            onPress={handleCloseSheet}
-                            className="bg-neutral-400 px-5 py-2.5"
-                        >
-                            <Text>Cancel</Text>
-                        </Button>
-                        <Button
-                            onPress={handleSaveEvent}
-                            className={`px-5 py-2.5 ${
-                                isPending ? "bg-primary/70" : "bg-primary"
-                            }`}
-                            disabled={isPending}
-                        >
-                            {isPending ? (
-                                <View className="flex-row items-center">
-                                    <ActivityIndicator
-                                        size="small"
-                                        color="white"
+                            {addEventForm.Field({
+                                name: "name",
+                                children: (field) => (
+                                    <TextInput
+                                        placeholder="event name"
+                                        value={field.state.value}
+                                        onChangeText={field.handleChange}
+                                        className="p-3 font-light text-white rounded border border-input"
+                                        ref={nameInputRef}
                                     />
-                                    <Text className="ml-2 text-white">
-                                        Saving...
-                                    </Text>
-                                </View>
-                            ) : (
-                                <Text>Save</Text>
-                            )}
-                        </Button>
-                    </View>
-                </View>
-            </TouchableWithoutFeedback>
+                                ),
+                            })}
+                        </View>
+
+                        <View className="mb-4">
+                            <Text className="mb-2 text-base font-semibold">
+                                recurrence
+                            </Text>
+                            <View className="flex-row justify-between items-center p-3 rounded border border-input">
+                                {addEventForm.Field({
+                                    name: "recurrence_rule",
+                                    children: (field) => (
+                                        <>
+                                            {recurrenceOptions.map((option) => (
+                                                <Pressable
+                                                    key={option}
+                                                    onPress={() =>
+                                                        field.handleChange(
+                                                            option
+                                                        )
+                                                    }
+                                                >
+                                                    <Text
+                                                        className={`${
+                                                            field.state
+                                                                .value ===
+                                                            option
+                                                                ? "text-primary font-semibold"
+                                                                : "text-input font-semibold"
+                                                        }`}
+                                                    >
+                                                        {option}
+                                                    </Text>
+                                                </Pressable>
+                                            ))}
+                                        </>
+                                    ),
+                                })}
+                            </View>
+                        </View>
+
+                        <View className="mb-4">
+                            <Text className="mb-2 text-base font-semibold">
+                                event color
+                            </Text>
+                            <View className="flex-row justify-between items-center">
+                                {addEventForm.Field({
+                                    name: "color",
+                                    children: (field) => (
+                                        <>
+                                            {colorOptions.map((color) => (
+                                                <TouchableOpacity
+                                                    key={color}
+                                                    onPress={() =>
+                                                        field.handleChange(
+                                                            color
+                                                        )
+                                                    }
+                                                    style={{
+                                                        width: 24,
+                                                        height: 24,
+                                                        backgroundColor: color,
+                                                        borderRadius: 4,
+                                                        borderColor:
+                                                            field.state
+                                                                .value === color
+                                                                ? "white"
+                                                                : "transparent",
+                                                        borderWidth: 2,
+                                                    }}
+                                                />
+                                            ))}
+                                        </>
+                                    ),
+                                })}
+                            </View>
+                        </View>
+
+                        <View className="mb-4">
+                            <Text className="mb-2 text-base font-semibold">
+                                event description
+                            </Text>
+                            {addEventForm.Field({
+                                name: "description",
+                                children: (field) => (
+                                    <TextInput
+                                        placeholder="Enter description"
+                                        value={field.state.value}
+                                        onChangeText={field.handleChange}
+                                        multiline
+                                        numberOfLines={3}
+                                        className="border border-input p-3 rounded min-h-[65px] font-light text-white"
+                                        ref={descriptionInputRef}
+                                    />
+                                ),
+                            })}
+                        </View>
+
+                        <Text className="mb-4 text-base font-medium">
+                            location
+                        </Text>
+                        <View className="mb-4">
+                            {addEventForm.Field({
+                                name: "location",
+                                children: (field) => (
+                                    <TextInput
+                                        placeholder="location"
+                                        value={field.state.value}
+                                        onChangeText={field.handleChange}
+                                        className="p-3 font-light text-white rounded border border-input"
+                                        ref={locationInputRef}
+                                    />
+                                ),
+                            })}
+                        </View>
+
+                        <View className="flex-row gap-2 justify-end mt-4 mb-6">
+                            <Button
+                                onPress={handleCloseSheet}
+                                className="bg-neutral-400 px-5 py-2.5"
+                            >
+                                <Text>Cancel</Text>
+                            </Button>
+                            <Button
+                                onPress={handleSaveEvent}
+                                className={`px-5 py-2.5 ${
+                                    isPending ? "bg-primary/70" : "bg-primary"
+                                }`}
+                                disabled={isPending}
+                            >
+                                {isPending ? (
+                                    <View className="flex-row items-center">
+                                        <ActivityIndicator
+                                            size="small"
+                                            color="white"
+                                        />
+                                        <Text className="ml-2 text-white">
+                                            Saving...
+                                        </Text>
+                                    </View>
+                                ) : (
+                                    <Text>Save</Text>
+                                )}
+                            </Button>
+                        </View>
+                    </ScrollView>
+                </Pressable>
+            </KeyboardAvoidingView>
         </ActionSheet>
     );
 }
