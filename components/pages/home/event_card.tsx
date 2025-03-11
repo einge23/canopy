@@ -7,7 +7,6 @@ import { MapPin } from "lucide-react-native";
 interface EventCardProps {
     event: EventDTO;
 }
-
 export default function EventCard({ event }: EventCardProps) {
     return (
         <Card
@@ -21,7 +20,7 @@ export default function EventCard({ event }: EventCardProps) {
                 <View className="flex-1">
                     <View className="flex-row items-center">
                         <Text
-                            className="text-xs text-black font-bold shadow-sm flex-shrink"
+                            className="text-xs  text-black font-bold shadow-sm flex-shrink"
                             numberOfLines={1}
                         >
                             {event.name}
