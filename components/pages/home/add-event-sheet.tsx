@@ -19,6 +19,7 @@ import { CreateEventRequest, createEvent } from "~/api/events";
 import { useUser } from "@clerk/clerk-expo";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner-native";
+import { useForm } from "@tanstack/react-form";
 
 interface AddEventSheetProps extends SheetProps<"add-event-sheet"> {
     onClose?: () => void;
@@ -34,7 +35,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
     }
     const userId = user.id;
     const { isPending, mutate: saveEvent } = useMutation({
-        mutationFn: async () => await createEvent(createEventRequest),
+        mutationFn: async () => await createEvent(addEventForm.state.values),
         onSuccess: () => {
             toast.success("Event saved successfully");
             SheetManager.hide("add-event-sheet");
@@ -69,21 +70,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
 
     // Use default color from colorOptions
     const defaultColor = "#55CBCD";
-
-    const [createEventRequest, setCreateEventRequest] =
-        useState<CreateEventRequest>({
-            name: "",
-            start: initialStart,
-            end: initialEnd,
-            location: "",
-            description: "",
-            user_id: userId,
-            color: defaultColor,
-            recurrence_rule: undefined,
-        });
-
     // UI state for recurrence selection
-    const [recurrence, setRecurrence] = useState<string>("Never");
 
     const recurrenceOptions = ["Never", "Daily", "Weekly", "Monthly", "Yearly"];
     const colorOptions = [
@@ -109,51 +96,21 @@ export default function AddEventSheet(props: AddEventSheetProps) {
         return null;
     }, [props.payload]);
 
-    // Combined handler for recurrence changes
-    const handleRecurrenceChange = (option: string) => {
-        setRecurrence(option);
-
-        // Update recurrence_rule in createEventRequest
-        let recurrenceRule = undefined;
-        if (option !== "Never") {
-            recurrenceRule = `FREQ=${option.toUpperCase()};`;
-        }
-
-        setCreateEventRequest((prev) => ({
-            ...prev,
-            recurrence_rule: recurrenceRule,
-        }));
-    };
-
-    // Handler for color selection
-    const handleColorSelect = (color: string) => {
-        setCreateEventRequest((prev) => ({
-            ...prev,
-            color,
-        }));
-    };
-
-    const handleLocationChange = (location: string) => {
-        setCreateEventRequest((prev) => ({
-            ...prev,
-            location,
-        }));
-    };
-
-    // Handlers for other form fields
-    const handleNameChange = (name: string) => {
-        setCreateEventRequest((prev) => ({
-            ...prev,
-            name,
-        }));
-    };
-
-    const handleDescriptionChange = (description: string) => {
-        setCreateEventRequest((prev) => ({
-            ...prev,
-            description,
-        }));
-    };
+    const addEventForm = useForm({
+        defaultValues: {
+            name: "",
+            description: "",
+            location: "",
+            color: defaultColor,
+            recurrence: "Never",
+            start: initialStart,
+            end: initialEnd,
+            user_id: userId,
+        } as CreateEventRequest,
+        onSubmit: async () => {
+            await handleSaveEvent();
+        },
+    });
 
     const handleCloseSheet = () => {
         if (props.onClose) {
