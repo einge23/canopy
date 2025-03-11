@@ -29,7 +29,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
     const bgColor = colorScheme === "dark" ? "#212121" : "#e8f4ea";
 
     const { user } = useUser();
-    if(!user) {
+    if (!user) {
         return null;
     }
     const userId = user.id;
@@ -38,6 +38,7 @@ export default function AddEventSheet(props: AddEventSheetProps) {
         onSuccess: () => {
             toast.success("Event saved successfully");
             SheetManager.hide("add-event-sheet");
+            if (props.payload) props.payload.refetchEvents();
         },
         onError: (error) => {
             toast.error("Failed to save event");
@@ -188,7 +189,6 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                 alignSelf: "center",
             }}
             keyboardHandlerEnabled={true}
-            
         >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
                 <View
@@ -280,10 +280,8 @@ export default function AddEventSheet(props: AddEventSheetProps) {
                             className="border border-input p-3 rounded min-h-[65px] font-light text-white"
                         />
                     </View>
-                    
-                    <Text className="mb-4 text-base font-medium">
-                        location
-                    </Text>
+
+                    <Text className="mb-4 text-base font-medium">location</Text>
 
                     <View className="mb-4">
                         <TextInput

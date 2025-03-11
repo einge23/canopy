@@ -19,6 +19,7 @@ import AddEventModal from "~/components/pages/home/add-event-modal";
 import { SheetManager } from "react-native-actions-sheet";
 import { useQuery } from "@tanstack/react-query";
 import { getUserEventsByDate } from "~/api/events";
+import EventCard from "~/components/pages/home/event_card";
 
 const boxHeight = 64;
 
@@ -29,11 +30,11 @@ export default function Home() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
     const { user } = useUser();
-    if(!user) {
+    if (!user) {
         return null;
     }
-    
-    const user_id = user.id
+
+    const user_id = user.id;
     useEffect(() => {
         const timer = setInterval(() => {
             setCurrentTime(new Date());
@@ -42,12 +43,47 @@ export default function Home() {
         return () => clearInterval(timer);
     }, []);
 
-    const currentDate = new Date();
+    const currentDate = React.useMemo(() => new Date(), []);
 
-    const {isLoading, data: events} = useQuery({
+    const {
+        isLoading,
+        data: events,
+        refetch: refetchEvents,
+    } = useQuery({
         queryKey: ["events", user_id, currentDate],
         queryFn: () => getUserEventsByDate({ user_id, date: currentDate }),
-    })
+        staleTime: 60000,
+        refetchOnWindowFocus: false,
+    });
+
+    const getEventsForHour = (hour: number) => {
+        if (!events) return [];
+
+        const today = new Date();
+        const hourStart = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            hour,
+            0,
+            0
+        );
+        const hourEnd = new Date(
+            today.getFullYear(),
+            today.getMonth(),
+            today.getDate(),
+            hour + 1,
+            0,
+            0
+        );
+
+        return events.filter((event) => {
+            const eventStart = new Date(event.start);
+            const eventEnd = new Date(event.end);
+
+            return eventStart < hourEnd && eventEnd > hourStart;
+        });
+    };
 
     useEffect(() => {
         const scrollTimer = setTimeout(() => {
@@ -84,7 +120,12 @@ export default function Home() {
 
     const handleOpenAddEventSheet = (hour: number) => {
         SheetManager.show("add-event-sheet", {
-            payload: { selectedDate: new Date(), startHour: hour, user_id },
+            payload: {
+                selectedDate: new Date(),
+                startHour: hour,
+                user_id,
+                refetchEvents,
+            },
             onClose: () => {
                 setSelectedHour(null);
             },
@@ -170,6 +211,43 @@ export default function Home() {
                                             />
                                         </>
                                     )}
+
+                                    {getEventsForHour(item).map((event) => {
+                                        const startTime = new Date(event.start);
+                                        const endTime = new Date(event.end);
+
+                                        const startMinutes =
+                                            startTime.getHours() === item
+                                                ? startTime.getMinutes()
+                                                : 0;
+
+                                        const endMinutes =
+                                            endTime.getHours() === item + 1
+                                                ? endTime.getMinutes()
+                                                : 60;
+
+                                        const top =
+                                            (startMinutes / 60) * boxHeight;
+                                        const height =
+                                            ((endMinutes - startMinutes) / 60) *
+                                            boxHeight;
+
+                                        return (
+                                            <View
+                                                key={event.id}
+                                                style={{
+                                                    position: "absolute",
+                                                    top,
+                                                    left: 2,
+                                                    right: 2,
+                                                    height: boxHeight - 10,
+                                                    zIndex: 50,
+                                                }}
+                                            >
+                                                <EventCard event={event} />
+                                            </View>
+                                        );
+                                    })}
                                 </View>
                             </Pressable>
                         )}

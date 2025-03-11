@@ -1,13 +1,5 @@
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardFooter,
-    CardHeader,
-    CardTitle,
-} from "~/components/ui/card";
+import { Card, CardContent } from "~/components/ui/card";
 import { Text } from "~/components/ui/text";
-import { Button } from "~/components/ui/button";
 import { EventDTO } from "~/api/events";
 import { View } from "react-native";
 
@@ -16,14 +8,32 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event }: EventCardProps) {
-
     return (
-        <View className="z-10 h-64 rounded-full border">
-            <Text>{event.name}</Text>
-            <Text>{event.location}</Text>
-            <Text>{event.description}</Text>
-            <Text>{event.color}</Text>
-            <Text>{event.recurrence_rule}</Text>
-        </View>
+        <Card
+            className="h-full overflow-hidden border-l-4 shadow-lg"
+            style={{
+                backgroundColor: event.color,
+                borderLeftColor: event.color,
+            }}
+        >
+            <CardContent className="p-1 flex-row items-center">
+                <View className="flex-1">
+                    <Text
+                        className="text-xs text-black font-bold shadow-sm"
+                        numberOfLines={1}
+                    >
+                        {event.name}
+                    </Text>
+                    {event.location && (
+                        <Text
+                            className="text-xs text-muted shadow-sm"
+                            numberOfLines={1}
+                        >
+                            {event.location}
+                        </Text>
+                    )}
+                </View>
+            </CardContent>
+        </Card>
     );
 }

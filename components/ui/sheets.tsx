@@ -10,6 +10,7 @@ declare module "react-native-actions-sheet" {
                 selectedDate: Date;
                 startHour: number;
                 user_id: string;
+                refetchEvents: () => void;
             };
         }>;
     }
