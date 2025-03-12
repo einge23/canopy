@@ -1,11 +1,9 @@
 import axios from "axios";
 
-// const baseURL =
-//     process.env.EXPO_PUBLIC_API_ENV === "production"
-//         ? "https://canopy-api-production.up.railway.app"
-//         : "http://localhost:3000";
-
-const baseURL = "http://localhost:3000";
+const baseURL =
+  process.env.EXPO_PUBLIC_API_ENV === "production"
+    ? "https://canopy-api-production.up.railway.app"
+    : "http://localhost:3000";
 
 console.log(process.env.EXPO_PUBLIC_API_ENV);
 
