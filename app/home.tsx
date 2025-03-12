@@ -18,8 +18,9 @@ import { Plus } from "lucide-react-native";
 import AddEventModal from "~/components/pages/home/add-event-modal";
 import { SheetManager } from "react-native-actions-sheet";
 import { useQuery } from "@tanstack/react-query";
-import { getUserEventsByDate } from "~/api/events";
+import { EventDTO, getUserEventsByDate } from "~/api/events";
 import EventCard from "~/components/pages/home/event_card";
+import { Skeleton } from "~/components/ui/skeleton";
 
 const boxHeight = 64;
 
@@ -55,6 +56,22 @@ export default function Home() {
         staleTime: 60000,
         refetchOnWindowFocus: false,
     });
+
+    const renderHourContent = (hour: number) => {
+        if (isLoading) {
+            // Render skeleton placeholders
+            return (
+                <View className="flex-1 h-16 relative border-b border-white/10">
+                    {hour % 2 === 0 && (
+                        <Skeleton className="absolute left-2 right-2 top-2 h-12 rounded-md" />
+                    )}
+                    {hour % 3 === 0 && (
+                        <Skeleton className="absolute left-2 right-2 top-6 h-8 rounded-md" />
+                    )}
+                </View>
+            );
+        }
+    };
 
     const getEventsForHour = (hour: number) => {
         if (!events) return [];
@@ -94,7 +111,6 @@ export default function Home() {
                         animated: true,
                         viewPosition: 0.3,
                     });
-                    console.log(`Scrolling to hour: ${currentTime.getHours()}`);
                 } catch (error) {
                     console.error("Error scrolling:", error);
                 }
@@ -132,6 +148,18 @@ export default function Home() {
         });
     };
 
+    const handleOpenEditEventSheet = (event: EventDTO) => {
+        SheetManager.show("edit-event-sheet", {
+            payload: {
+                event,
+                refetchEvents,
+            },
+            onClose: () => {
+                setSelectedHour(null);
+            },
+        });
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-background">
             <SignedIn>
@@ -160,9 +188,8 @@ export default function Home() {
                                         setSelectedHour(item);
                                         handleOpenAddEventSheet(item);
                                     } else {
-                                        console.log(
-                                            "This hour already has events"
-                                        );
+                                        setSelectedHour(item);
+                                        handleOpenEditEventSheet(hourEvents[0]);
                                     }
                                 }}
                             >
@@ -256,6 +283,7 @@ export default function Home() {
                                         );
                                     })}
                                 </View>
+                                {renderHourContent(item)}
                             </Pressable>
                         )}
                         fixed={true}
