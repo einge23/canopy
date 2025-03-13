@@ -1,12 +1,12 @@
 import axios from "axios";
 import { Origami } from "lucide-react-native";
 
-// const baseURL =
-//   process.env.EXPO_PUBLIC_API_ENV === "production"
-//     ? "https://canopy-api-production.up.railway.app"
-//     : "http://localhost:3000";
+const baseURL =
+    process.env.EXPO_PUBLIC_API_ENV === "production"
+        ? "https://canopy-api-production.up.railway.app"
+        : "http://localhost:3000";
 
-const baseURL = "http://localhost:3000";
+// const baseURL = "http://localhost:3000";
 
 console.log(process.env.EXPO_PUBLIC_API_ENV);
 
@@ -26,9 +26,9 @@ export const getAuthenticatedApi = (token: string) => {
             "User-Agent": "Canopy Client",
             Referer: "localhost:3000",
             Origin: "localhost:3000",
-            "Sec-Fetch-Dest": "localhost:3000",
-            "X-Forwarded-Host": "localhost:3000",
-            "X-Forwarded-Proto": "http",
+            "Sec-Fetch-Dest": "https://canopy-api-production.up.railway.app",
+            "X-Forwarded-Host": "https://canopy-api-production.up.railway.app",
+            "X-Forwarded-Proto": "https",
         },
         timeout: 10000,
     });
