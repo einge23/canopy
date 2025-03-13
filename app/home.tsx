@@ -28,6 +28,7 @@ const boxHeight = 64;
 
 export default function Home() {
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(new Date());
     const flatGridRef = useRef<FlatList>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,6 +52,28 @@ export default function Home() {
 
     const currentDate = React.useMemo(() => new Date(), []);
 
+    const goToPreviousDay = () => {
+        const prevDay = new Date(selectedDate);
+        prevDay.setDate(prevDay.getDate() - 1);
+        setSelectedDate(prevDay);
+    };
+
+    const goToNextDay = () => {
+        const nextDay = new Date(selectedDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        setSelectedDate(nextDay);
+    };
+
+    // Check if selected date is today
+    const isToday = React.useMemo(() => {
+        const today = new Date();
+        return (
+            selectedDate.getDate() === today.getDate() &&
+            selectedDate.getMonth() === today.getMonth() &&
+            selectedDate.getFullYear() === today.getFullYear()
+        );
+    }, [selectedDate]);
+
     const { getToken } = useAuth();
 
     const {
@@ -58,13 +81,13 @@ export default function Home() {
         data: events,
         refetch: refetchEvents,
     } = useQuery({
-        queryKey: ["events", user_id, currentDate],
+        queryKey: ["events", user_id, selectedDate],
         queryFn: async () => {
             const token = await getToken();
             if (!token) {
                 throw new Error("Unable to get token.");
             }
-            return getUserEventsByDate({ user_id, date: currentDate }, token);
+            return getUserEventsByDate({ user_id, date: selectedDate }, token);
         },
         staleTime: 60000,
         refetchOnWindowFocus: false,
@@ -169,7 +192,12 @@ export default function Home() {
         <SafeAreaView className="flex-1 bg-background">
             <SignedIn>
                 <View className="flex-1">
-                    <Navbar />
+                    <Navbar
+                        selectedDate={selectedDate}
+                        onPreviousDay={goToPreviousDay}
+                        onNextDay={goToNextDay}
+                        isToday={isToday}
+                    />
                     <View style={{ flex: 1 }}>
                         <FlatGrid
                             ref={flatGridRef}
