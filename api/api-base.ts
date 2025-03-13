@@ -1,5 +1,4 @@
 import axios from "axios";
-import { Origami } from "lucide-react-native";
 
 const baseURL =
     process.env.EXPO_PUBLIC_API_ENV === "production"
@@ -20,7 +19,7 @@ export const getAuthenticatedApi = (token: string) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
             Accept: "*/*",
-            Host: "expo",
+            Host: "canopy-api-production.up.railway.app",
             Connection: "keep-alive",
             "Accept-Encoding": "gzip, deflate, br",
             "User-Agent": "Canopy Client",
