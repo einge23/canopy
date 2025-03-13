@@ -51,6 +51,7 @@ module.exports = {
                 : {
                       // Use CSS variables for web (from your global.css)
                       border: "hsl(var(--border))",
+                      contrastText: "hsl(var(--contrast-text))",
                       input: "hsl(var(--input))",
                       ring: "hsl(var(--ring))",
                       background: "hsl(var(--background))",

@@ -10,7 +10,6 @@ https://tanstack.com/form/latest/docs/overview
 
 npx eas-cli@latest build -p ios --submit
 
-[] API: add prod/local env settings.
-
+[] loading skeleton
 [] going to next/previous days
 [] edit event sheet

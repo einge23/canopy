@@ -25,6 +25,7 @@
         --border: 131 30% 86%; /* #d2e7d6 */
         --input: 131 30% 86%;
         --ring: 150 32% 20%;
+        --contrast-text: 0 0% 0%; /* #000000 */
     }
 
     .dark:root {
@@ -48,5 +49,6 @@
         --border: 0 0% 45%; /* #3d3d3d */
         --input: 0 0% 24%; /* #3d3d3d */
         --ring: 0 0% 24%; /* #3d3d3d */
+        --contrast-text: 0 0% 100%; /* #ffffff */
     }
 }

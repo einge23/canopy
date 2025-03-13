@@ -14,6 +14,7 @@ export default function EventCard({ event }: EventCardProps) {
             style={{
                 backgroundColor: event.color,
                 borderLeftColor: event.color,
+                zIndex: 11,
             }}
         >
             <CardContent className="p-1 flex-row items-center">
