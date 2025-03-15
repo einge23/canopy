@@ -10,6 +10,6 @@ https://tanstack.com/form/latest/docs/overview
 
 npx eas-cli@latest build -p ios --submit
 
-[] loading skeleton
-[] going to next/previous days
-[] edit event sheet
+[X] loading skeleton
+[X] going to next/previous days
+[X] edit event sheet

@@ -81,43 +81,61 @@ export default function Home() {
         data: events,
         refetch: refetchEvents,
     } = useQuery({
-        queryKey: ["events", user_id, selectedDate],
+        // Keep the query key the same
+        queryKey: ["events", user_id, selectedDate.toISOString().split("T")[0]],
         queryFn: async () => {
             const token = await getToken();
             if (!token) {
                 throw new Error("Unable to get token.");
             }
-            return getUserEventsByDate({ user_id, date: selectedDate }, token);
+
+            // Create a date object with time set to noon to avoid timezone edge cases
+            const queryDate = new Date(
+                selectedDate.getFullYear(),
+                selectedDate.getMonth(),
+                selectedDate.getDate(),
+                12,
+                0,
+                0
+            );
+
+            return getUserEventsByDate({ user_id, date: queryDate }, token);
         },
-        staleTime: 60000,
-        refetchOnWindowFocus: false,
+        staleTime: 5 * 60 * 1000, // 5 minutes - data won't be refetched until stale
+        refetchOnWindowFocus: false, // Don't refetch when window regains focus
+        refetchOnMount: false, // Don't refetch when component remounts
+        refetchOnReconnect: false, // Don't refetch on reconnect
     });
 
     const getEventsForHour = (hour: number) => {
         if (!events) return [];
 
-        const today = new Date();
+        // Create date objects for the hour range in the selected date
         const hourStart = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate(),
+            selectedDate.getFullYear(),
+            selectedDate.getMonth(),
+            selectedDate.getDate(),
             hour,
             0,
             0
         );
+
         const hourEnd = new Date(
-            today.getFullYear(),
-            today.getMonth(),
-            today.getDate(),
+            selectedDate.getFullYear(),
+            selectedDate.getMonth(),
+            selectedDate.getDate(),
             hour + 1,
             0,
             0
         );
 
         return events.filter((event) => {
+            // Parse ISO strings to Date objects for comparison
             const eventStart = new Date(event.start);
             const eventEnd = new Date(event.end);
 
+            // Event overlaps with this hour if:
+            // It starts before the hour ends AND ends after the hour starts
             return eventStart < hourEnd && eventEnd > hourStart;
         });
     };
