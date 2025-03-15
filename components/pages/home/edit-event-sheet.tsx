@@ -17,7 +17,7 @@ import ActionSheet, {
 } from "react-native-actions-sheet";
 import { TextInput } from "react-native-gesture-handler";
 import { toast } from "sonner-native";
-import { editEvent, EventDTO } from "~/api/events";
+import { deleteEvent, editEvent, EventDTO } from "~/api/events";
 import { Button } from "~/components/ui/button";
 import { Text } from "~/components/ui/text";
 interface EditEventSheetProps extends SheetProps<"edit-event-sheet"> {
@@ -62,6 +62,28 @@ export default function EditEventSheet(props: EditEventSheetProps) {
         onError: (error) => {
             toast.error("Failed to edit event");
             console.error("Failed to edit event:", error);
+        },
+    });
+
+    const { isPending: pendingDelete, mutate: saveDeleteEvent } = useMutation({
+        mutationFn: async () => {
+            const token = await props.payload?.getToken();
+            if (!token || token === undefined) {
+                throw new Error("Unable to get token.");
+            }
+            await deleteEvent(editEventForm.state.values.id, token);
+        },
+
+        onSuccess: () => {
+            toast.success("Event deleted successfully");
+            handleCloseSheet();
+            if (props.payload?.refetchEvents) {
+                props.payload.refetchEvents();
+            }
+        },
+        onError: (error) => {
+            toast.error("Failed to delete event");
+            console.error("Failed to delete event:", error);
         },
     });
 
@@ -273,34 +295,63 @@ export default function EditEventSheet(props: EditEventSheetProps) {
                                 })}
                             </View>
                         </View>
-                        <View className="flex-row justify-end gap-2 mt-4 mb-6">
+
+                        <View className="flex-row justify-between items-center mt-4 mb-6">
+                            {/* Delete button on the left */}
                             <Button
-                                onPress={handleCloseSheet}
-                                className="bg-neutral-400 px-5 py-2.5"
-                            >
-                                <Text>Cancel</Text>
-                            </Button>
-                            <Button
-                                onPress={() => saveEditEvent()}
-                                className={`px-5 py-2.5 ${
-                                    isPending ? "bg-primary/70" : "bg-primary"
+                                onPress={() => saveDeleteEvent()}
+                                className={`px-5 py-2.5 bg-red-500 ${
+                                    pendingDelete ? "opacity-70" : ""
                                 }`}
-                                disabled={isPending}
+                                disabled={pendingDelete}
                             >
-                                {isPending ? (
+                                {pendingDelete ? (
                                     <View className="flex-row items-center">
                                         <ActivityIndicator
                                             size="small"
                                             color="white"
                                         />
                                         <Text className="ml-2 text-white">
-                                            Saving...
+                                            Deleting...
                                         </Text>
                                     </View>
                                 ) : (
-                                    <Text>Save</Text>
+                                    <Text>Delete</Text>
                                 )}
                             </Button>
+
+                            {/* Cancel and Save buttons on the right */}
+                            <View className="flex-row gap-2">
+                                <Button
+                                    onPress={handleCloseSheet}
+                                    className="bg-neutral-400 px-5 py-2.5"
+                                >
+                                    <Text>Cancel</Text>
+                                </Button>
+                                <Button
+                                    onPress={() => saveEditEvent()}
+                                    className={`px-5 py-2.5 ${
+                                        isPending
+                                            ? "bg-primary/70"
+                                            : "bg-primary"
+                                    }`}
+                                    disabled={isPending}
+                                >
+                                    {isPending ? (
+                                        <View className="flex-row items-center">
+                                            <ActivityIndicator
+                                                size="small"
+                                                color="white"
+                                            />
+                                            <Text className="ml-2 text-white">
+                                                Saving...
+                                            </Text>
+                                        </View>
+                                    ) : (
+                                        <Text>Save</Text>
+                                    )}
+                                </Button>
+                            </View>
                         </View>
                     </ScrollView>
                 </Pressable>

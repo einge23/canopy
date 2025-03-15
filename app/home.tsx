@@ -23,7 +23,18 @@ import { useQuery } from "@tanstack/react-query";
 import { EventDTO, getUserEventsByDate } from "~/api/events";
 import EventCard from "~/components/pages/home/event_card";
 import EventCardSkeleton from "~/components/pages/home/event-card-skeleton";
-
+import {
+    GestureHandlerRootView,
+    Gesture,
+    GestureDetector,
+    Directions,
+} from "react-native-gesture-handler";
+import Animated, {
+    runOnJS,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
+} from "react-native-reanimated";
 const boxHeight = 64;
 
 export default function Home() {
@@ -35,11 +46,111 @@ export default function Home() {
     const [selectedHour, setSelectedHour] = useState<number | null>(null);
     const [scrollOffset, setScrollOffset] = useState(0);
 
+    // const translateX = useSharedValue(0);
+    // const swipeInProgress = useSharedValue(false);
+    // const screenWidth = Dimensions.get("window").width;
+
+    // // Work with a shared value for the date change operation
+    // const pendingDateOperation = useSharedValue<null | "next" | "previous">(
+    //     null
+    // );
+
+    // // Implement a safer gesture handler
+    // const panGesture = Gesture.Pan()
+    //     .failOffsetY(20) // Don't activate if user is trying to scroll vertically
+    //     .activeOffsetX([-10, 10])
+    //     .onBegin(() => {
+    //         // Only start if not already in progress
+    //         if (!swipeInProgress.value) {
+    //             translateX.value = 0;
+    //         }
+    //     })
+    //     .onUpdate((event) => {
+    //         // Only update position if not in swipe transition
+    //         if (!swipeInProgress.value) {
+    //             translateX.value = event.translationX;
+    //         }
+    //     })
+    //     .onEnd((event) => {
+    //         // Guard against multiple gesture end events
+    //         if (swipeInProgress.value) return;
+
+    //         const threshold = screenWidth * 0.15; // Make threshold easier
+
+    //         // Determine if swipe meets threshold
+    //         if (Math.abs(event.translationX) > threshold) {
+    //             swipeInProgress.value = true;
+
+    //             // Store which operation to perform instead of executing it immediately
+    //             pendingDateOperation.value =
+    //                 event.translationX > 0 ? "previous" : "next";
+
+    //             // Animate then run change on main JS thread
+    //             translateX.value = withTiming(
+    //                 0,
+    //                 { duration: 200 },
+    //                 (finished) => {
+    //                     if (finished) {
+    //                         runOnJS(executeDateChange)();
+    //                     } else {
+    //                         // Reset if animation was interrupted
+    //                         swipeInProgress.value = false;
+    //                         pendingDateOperation.value = null;
+    //                     }
+    //                 }
+    //             );
+    //         } else {
+    //             // Spring back if swipe wasn't far enough
+    //             translateX.value = withTiming(0, { duration: 100 });
+    //         }
+    //     });
+
+    // // Execute date change safely on the main JS thread
+    // const executeDateChange = () => {
+    //     try {
+    //         if (pendingDateOperation.value === "next") {
+    //             goToNextDay();
+    //         } else if (pendingDateOperation.value === "previous") {
+    //             goToPreviousDay();
+    //         }
+    //     } catch (error) {
+    //         console.error("Date change error:", error);
+    //     } finally {
+    //         // Always clean up the state values
+    //         swipeInProgress.value = false;
+    //         pendingDateOperation.value = null;
+    //     }
+    // };
+
+    // // Create better animation style that won't crash on rapid transitions
+    // const animatedStyles = useAnimatedStyle(() => {
+    //     // Calculate fade based on distance, but clamp values
+    //     const fadeAmount = Math.min(
+    //         0.4,
+    //         Math.abs(translateX.value) / screenWidth
+    //     );
+    //     const opacity = 1 - fadeAmount;
+
+    //     return {
+    //         opacity: opacity,
+    //         transform: [{ translateX: translateX.value }],
+    //     };
+    // });
+
+    // // Make sure we clean up properly
+    // useEffect(() => {
+    //     return () => {
+    //         // Cancel any pending animations on unmount
+    //         translateX.value = 0;
+    //         swipeInProgress.value = false;
+    //         pendingDateOperation.value = null;
+    //     };
+    // }, []);
+
     const { user } = useUser();
     if (!user) {
         return null;
     }
-
     const user_id = user.id;
 
     useEffect(() => {
@@ -216,7 +327,8 @@ export default function Home() {
                         onNextDay={goToNextDay}
                         isToday={isToday}
                     />
-                    <View style={{ flex: 1 }}>
+                    {/* <GestureDetector gesture={panGesture}> */}
+                    <Animated.View style={[{ flex: 1 }]}>
                         <FlatGrid
                             ref={flatGridRef}
                             itemDimension={Dimensions.get("window").width}
@@ -405,7 +517,8 @@ export default function Home() {
                             fixed={true}
                             numColumns={1}
                         />
-                    </View>
+                    </Animated.View>
+                    {/* </GestureDetector> */}
 
                     <View className="absolute right-4 bottom-4">
                         <Button

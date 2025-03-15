@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Pressable, View } from "react-native";
+import { Pressable, useColorScheme, View } from "react-native";
 import { Text } from "~/components/ui/text";
 import { ThemeToggle } from "~/components/ThemeToggle";
 import UserButton from "./pages/home/user-button";
@@ -25,6 +25,9 @@ export function Navbar({
         year: "numeric",
     });
 
+    const colorScheme = useColorScheme();
+    const iconColor = colorScheme === "dark" ? "white" : "black";
+
     return (
         <View className="flex-row items-center justify-between p-4 bg-background border-b border-border">
             <View className="flex-row items-center">
@@ -35,7 +38,7 @@ export function Navbar({
                     }}
                     className="p-2 mr-2"
                 >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft size={20} color={iconColor} />
                 </Pressable>
 
                 <Text className="text-xl font-semibold text-foreground">
@@ -49,7 +52,7 @@ export function Navbar({
                     }}
                     className="p-2 ml-2"
                 >
-                    <ChevronRight size={20} />
+                    <ChevronRight size={20} color={iconColor} />
                 </Pressable>
             </View>
 
