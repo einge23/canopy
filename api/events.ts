@@ -43,7 +43,7 @@ export async function getUserEventsByDate(
     const authApi = getAuthenticatedApi(token);
 
     const response = await authApi.get<EventDTO[]>(
-        `/events/${request.user_id}/${request.date.toISOString()}`
+        `/events/daily/${request.user_id}/${request.date.toISOString()}`
     );
     console.log(response);
     return response.data;
